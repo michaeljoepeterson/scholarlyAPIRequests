@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const app = express();
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
@@ -11,6 +12,13 @@ function runServer( port = PORT) {
       server = app.listen(port, () => {
         console.log(`Your app is listening on port! ${port}`);
         resolve();
+        fs.writeFile("/webProjects/scolarlyAPIRequests/data/test.txt", "Hey there!", function(err) {
+          if(err) {
+              return console.log(err);
+          }
+
+          console.log("The file was saved!");
+      }); 
       })
         .on('error', err => {
           mongoose.disconnect();
