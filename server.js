@@ -4,21 +4,24 @@ const fs = require('fs');
 const app = express();
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
-const {PORT} = require('./config');
-
+//const {MakeCalls} = require('./classes/')
+const {PORT,API_KEY,URL} = require('./config');
+const request = require('request');
 function runServer( port = PORT) {
 
   return new Promise((resolve, reject) => {
       server = app.listen(port, () => {
         console.log(`Your app is listening on port! ${port}`);
         resolve();
+        /*
         fs.writeFile("/webProjects/scolarlyAPIRequests/data/test.txt", "Hey there!", function(err) {
           if(err) {
               return console.log(err);
           }
 
-          console.log("The file was saved!");
-      }); 
+            console.log("The file was saved!");
+          }); 
+      */
       })
         .on('error', err => {
           mongoose.disconnect();
