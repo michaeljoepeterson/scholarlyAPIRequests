@@ -17,9 +17,46 @@ MakeCalls.prototype.requestSuccess = function(data) {
 	
 }
 
+MakeCalls.prototype.articleRequestMade = function(error,response,body) {
+	try{
+		if(body !== undefined){
+			console.log("urls",body);
+			//const parsedBody = JSON.parse(body);
+		
+			//console.log("urls",parsedBody.records[0].url);
+		}
+	}
+	catch(error){
+		console.log("error article", error);
+	}
+}
+
+MakeCalls.prototype.getReferences = function(articleUrl) {
+	const options = {
+		url:articleUrl
+	};
+
+	this.request(options,this.articleRequestMade);
+}
+
 MakeCalls.prototype.requestMade = function(error,response,body) {
-	const parsedBody = JSON.parse(body);
-	console.log("request data",parsedBody);
+	try{
+		//console.log("body===========",response)
+		if(body !== undefined){
+			const parsedBody = JSON.parse(body);
+			;
+			//console.log("apikey===========",this.apiKey)
+			for(let i = 0;i < parsedBody.records.length;i++){
+				console.log("urls",parsedBody.records[i].url[0].value, i)
+				this.getReferences(parsedBody.records[i].url[0].value);
+			}
+		}
+		
+	}
+	catch(error){
+		console.log("error ", error);
+	}
+	
 }
 //make the actual request
 MakeCalls.prototype.makeRequest = function(){
@@ -27,13 +64,14 @@ MakeCalls.prototype.makeRequest = function(){
 		url:this.url,
 		qs:{
 			api_key:this.apiKey,
-			q:"subject:Psychology",
+			q:"subject:Psychology openaccess:true",
 			output:"json",
-			p:"100"
+			p:"2"
+
 		}
 	};
 
-	this.request(options,this.requestMade);
+	this.request(options,this.requestMade.bind(this));
 }
 
 
