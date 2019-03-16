@@ -17,8 +17,9 @@ MakeCalls.prototype.requestSuccess = function(data) {
 	
 }
 
-MakeCalls.prototype.requestMade = function(data) {
-	console.log("request data");
+MakeCalls.prototype.requestMade = function(error,response,body) {
+	const parsedBody = JSON.parse(body);
+	console.log("request data",parsedBody);
 }
 //make the actual request
 MakeCalls.prototype.makeRequest = function(){
@@ -32,7 +33,7 @@ MakeCalls.prototype.makeRequest = function(){
 		}
 	};
 
-	request(options,this.requestMade);
+	this.request(options,this.requestMade);
 }
 
 
