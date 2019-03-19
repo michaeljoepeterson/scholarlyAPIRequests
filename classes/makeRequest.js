@@ -1,5 +1,8 @@
+const cheerio = require('cheerio');
+const request = require('request');
+
 //calls class
-function MakeCalls(request,apiKey,url){
+function MakeCalls(apiKey,url){
 	this.request = request;
 	this.apiKey = apiKey;
 	this.url = url;
@@ -20,7 +23,12 @@ MakeCalls.prototype.requestSuccess = function(data) {
 MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 	try{
 		if(body !== undefined){
-			console.log("urls",body);
+			console.log("html",typeof  body);
+			const $ = cheerio.load(body);
+			const citationContent = $(".CitationContent");
+			citationContent.each(function(i,elem){
+				console.log(i,$(this).text());
+			})
 			//const parsedBody = JSON.parse(body);
 		
 			//console.log("urls",parsedBody.records[0].url);
@@ -59,6 +67,7 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 	
 }
 //make the actual request
+//to continue at next set of results it is p + 1
 MakeCalls.prototype.makeRequest = function(){
 	const options = {
 		url:this.url,
