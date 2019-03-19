@@ -6,6 +6,10 @@ function MakeCalls(apiKey,url){
 	this.request = request;
 	this.apiKey = apiKey;
 	this.url = url;
+	this.referenceData = {
+		results:[]
+	};
+	this.idCounter = 0;
 }
 //initialize file writing class for json
 MakeCalls.prototype.createFile = function(data) {
@@ -20,18 +24,33 @@ MakeCalls.prototype.requestSuccess = function(data) {
 	
 }
 
+MakeCalls.prototype.findAuthors = function(data){
+
+}
+
+MakeCalls.prototype.placeItalics = function(data){
+
+}
+
 MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 	try{
 		if(body !== undefined){
-			console.log("html",typeof  body);
+			let self = this;
+			//console.log("html",body);
 			const $ = cheerio.load(body);
 			const citationContent = $(".CitationContent");
-			citationContent.each(function(i,elem){
-				console.log(i,$(this).text());
-			})
-			//const parsedBody = JSON.parse(body);
-		
-			//console.log("urls",parsedBody.records[0].url);
+			console.log(citationContent.length);
+			
+			for(let i = 0;i < citationContent.length;i++){
+				//console.log($(citationContent[i]).text());
+				this.referenceData.results.push({
+					id:this.idCounter,
+					rawText:$(citationContent[i]).text()
+				});
+				this.idCounter++
+			}
+			
+			console.log(this.referenceData);
 		}
 	}
 	catch(error){
@@ -44,7 +63,7 @@ MakeCalls.prototype.getReferences = function(articleUrl) {
 		url:articleUrl
 	};
 
-	this.request(options,this.articleRequestMade);
+	this.request(options,this.articleRequestMade.bind(this));
 }
 
 MakeCalls.prototype.requestMade = function(error,response,body) {
