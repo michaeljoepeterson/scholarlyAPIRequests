@@ -27,8 +27,33 @@ MakeCalls.prototype.requestSuccess = function(data) {
 MakeCalls.prototype.findAuthors = function(data){
 
 }
+//place em tags in correct place
+//may need a check fo em tags before title ie date specifically
+MakeCalls.prototype.placeItalics = function(reference){
+	const $ = cheerio.load(reference);
+	let fullRefText = $(reference).text();
+	const emChildren = $(reference).children(".EmphasisTypeItalic ");
+	const emText = emChildren.text();
 
-MakeCalls.prototype.placeItalics = function(data){
+	for(let i = 0;i < emChildren.length;i++){
+
+		let emIndex = fullRefText.search($(emChildren[i]).text())
+		if(emIndex !== -1){
+			let emLength = $(emChildren[i]).text().length
+			//console.log("em index",emIndex);
+			let beforeEm = fullRefText.slice(0,emIndex);
+			let afterEm = fullRefText.slice(emIndex + emLength,fullRefText.length)
+			//console.log("before em", beforeEm);
+			//console.log("after em", afterEm);
+			fullRefText = beforeEm + "<em>" + $(emChildren[i]).text() + "</em>" + afterEm;
+
+		}
+	}
+	//console.log(fullRefText);
+	return fullRefText;
+}
+//use this to determine the type of reference journal book, etc.
+MakeCalls.prototype.checkRefType = function(data){
 
 }
 
@@ -39,13 +64,14 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 			//console.log("html",body);
 			const $ = cheerio.load(body);
 			const citationContent = $(".CitationContent");
-			console.log(citationContent.length);
+			console.log("citations ===============================",citationContent.length);
 			
 			for(let i = 0;i < citationContent.length;i++){
 				//console.log($(citationContent[i]).text());
+				let emText = this.placeItalics($(citationContent[i]));
 				this.referenceData.results.push({
 					id:this.idCounter,
-					rawText:$(citationContent[i]).text()
+					rawText:emText
 				});
 				this.idCounter++
 			}
