@@ -27,6 +27,28 @@ MakeCalls.prototype.requestSuccess = function(data) {
 MakeCalls.prototype.findAuthors = function(data){
 
 }
+
+//use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
+MakeCalls.prototype.checkRefType = function(data){
+
+}
+
+
+//use this to organize the references
+MakeCalls.prototype.splitReference = function(referenceText){
+	//const $ = cheerio.load(reference);
+	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
+
+	for(let i = 0;i < refArray.length;i++){
+		//console.log(refArray[i]);
+		if(refArray[i] === ""){
+			console.log(i,refArray[i],refArray);
+		}
+		
+	}
+	//console.log("ref array ",refArray, refArray.length);
+}
+
 //place em tags in correct place
 //may need a check fo em tags before title ie date specifically
 MakeCalls.prototype.placeItalics = function(reference){
@@ -46,16 +68,12 @@ MakeCalls.prototype.placeItalics = function(reference){
 			//console.log("before em", beforeEm);
 			//console.log("after em", afterEm);
 			fullRefText = beforeEm + "<em>" + $(emChildren[i]).text() + "</em>" + afterEm;
-
 		}
 	}
 	//console.log(fullRefText);
 	return fullRefText;
 }
-//use this to determine the type of reference journal book, etc.
-MakeCalls.prototype.checkRefType = function(data){
 
-}
 
 MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 	try{
@@ -69,6 +87,7 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 			for(let i = 0;i < citationContent.length;i++){
 				//console.log($(citationContent[i]).text());
 				let emText = this.placeItalics($(citationContent[i]));
+				this.splitReference(emText);
 				this.referenceData.results.push({
 					id:this.idCounter,
 					rawText:emText
@@ -76,7 +95,7 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 				this.idCounter++
 			}
 			
-			console.log(this.referenceData);
+			//console.log(this.referenceData);
 		}
 	}
 	catch(error){
