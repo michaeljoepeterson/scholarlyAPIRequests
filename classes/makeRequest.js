@@ -10,6 +10,9 @@ function MakeCalls(apiKey,url){
 		results:[]
 	};
 	this.idCounter = 0;
+	this.refTypefunctions = {
+		isWebsite: this.isWebsite
+	};
 }
 //initialize file writing class for json
 MakeCalls.prototype.createFile = function(data) {
@@ -27,7 +30,9 @@ MakeCalls.prototype.requestSuccess = function(data) {
 MakeCalls.prototype.findAuthors = function(data){
 
 }
-
+MakeCalls.prototype.isWebsite = function(data,test){
+	console.log("website function",data,test);
+}
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(data){
 
@@ -38,11 +43,12 @@ MakeCalls.prototype.checkRefType = function(data){
 MakeCalls.prototype.splitReference = function(referenceText){
 	//const $ = cheerio.load(reference);
 	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
-
+	let refType = "isWebsite";
+	this.refTypefunctions[refType]("yup","sure");
 	for(let i = 0;i < refArray.length;i++){
 		//console.log(refArray[i]);
 		if(refArray[i] === ""){
-			console.log(i,refArray[i],refArray);
+			c//onsole.log(i,refArray[i],refArray);
 		}
 		
 	}
