@@ -114,16 +114,42 @@ MakeCalls.prototype.isJournal = function(refArray){
 	refObject.authors = results[0];
 	let titleFound = false
 	let titleArray = [];
-
+	let journalTitleFound = false;
+	let journaltitleArray = [];
+	let volumeNum = "";
+	let issueNum = "";
 	for(let i = afterYearIndex;i < refArray.length;i++){
+		//capture article title
 		if(!titleFound){
 			titleArray.push(refArray[i]);
 		}
+		//capture journal title
+		else if(titleFound && !journalTitleFound){
+			journaltitleArray.push(refArray[i])
+		}
+		//capture journal volume and issue
+		else if(titleFound && journalTitleFound && refArray[i].startsWith('<em>')){
+			let volumeString = refArray[i].replace("<em>","").replace("</em>"," ");
+			let volumeArr = volumeString.split(" ");
+			volumeNum = "<em>" + volumeArr[0] + "</em>";
+			issueNum = volumeArr[1];
+		}
 
-		if(refArray[i].endsWith(".")){
+		if(refArray[i].endsWith(".") && !titleFound){
 			titleFound = true;
+		}
+		if(refArray[i].endsWith("</em>") && !journalTitleFound){
+			journalTitleFound = true;
 		}	
 	}
+
+	let titleString = titleArray.join(" ");
+	refObject.title = titleString;
+	let journalTitleString = journaltitleArray.join(" ");
+	refObject.journal = journalTitleString;
+	refObject.volume = volumeNum;
+	refObject.issue = issueNum;
+	console.log("site ref object ",refObject);
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(refString,refArray){
