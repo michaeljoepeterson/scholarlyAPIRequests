@@ -11,7 +11,13 @@ function MakeCalls(apiKey,url){
 	};
 	this.idCounter = 0;
 	this.refTypefunctions = {
-		isWebsite: this.isWebsite
+		isWebsite: this.isWebsite.bind(this),
+		isEncyclopedia: this.isEncyclopedia.bind(this),
+		isMovie: this.isMovie.bind(this),
+		isMagazine: this.isMagazine.bind(this),
+		isNewspaper:this.isNewspaper.bind(this),
+		isBook:this.isBook.bind(this),
+		isJournal:this.isJournal.bind(this)
 	};
 	this.yearPattern = /\(\d{4}\)/;
 	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
@@ -32,12 +38,57 @@ MakeCalls.prototype.requestError = function(data) {
 MakeCalls.prototype.requestSuccess = function(data) {
 	
 }
+//can use this in all checks
+MakeCalls.prototype.findAuthors = function(refArray){
+	let foundYear = false
+	let authorArray = [];
+	for(let i = 0;i < refArray.length;i++){
+		if(this.yearPattern.test(refArray[i]) || this.yearMonthPattern.test(refArray[i])){
+			break;
+		}
+		else{
+			authorArray.push(refArray[i]);
+		}
+	}
 
-MakeCalls.prototype.findAuthors = function(data){
-
+	let authorString = authorArray.join(" ");
+	console.log("author string: ",authorString);
 }
-MakeCalls.prototype.isWebsite = function(data,test){
-	console.log("website function",data,test);
+MakeCalls.prototype.isWebsite = function(refArray){
+	console.log("website function");
+	let refObject = {};
+	this.findAuthors(refArray);
+	//for(let i = 0;i < )
+}
+
+MakeCalls.prototype.isEncyclopedia = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
+}
+
+MakeCalls.prototype.isMovie = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
+}
+
+MakeCalls.prototype.isMagazine = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
+}
+
+MakeCalls.prototype.isNewspaper = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
+}
+
+MakeCalls.prototype.isBook = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
+}
+
+MakeCalls.prototype.isJournal = function(refArray){
+	//console.log("website function",data);
+	this.findAuthors(refArray);
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(refString,refArray){
@@ -75,7 +126,6 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 		return refType;
 	}
 
-	//let foundYear = false;
 	for(let i = 0;i < refArray.length;i++){
 		if(this.yearPattern.test(refArray[i])){
 			if(this.emPattern.test(refArray[i + 1])){
@@ -94,21 +144,18 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 }
 
 
-//use this to organize the references
+//use this to organize the references return object with split ref sections
 MakeCalls.prototype.splitReference = function(referenceText){
 	//const $ = cheerio.load(reference);
 	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
 	//let refType = "isWebsite";
 	//this.refTypefunctions[refType]("yup","sure");
 	let refType = this.checkRefType(referenceText,refArray);
-	console.log(refArray[0],refType);
-	for(let i = 0;i < refArray.length;i++){
-		//console.log(refArray[i]);
-		if(refArray[i] === ""){
-			//console.log(i,refArray[i],refArray);
-		}
-		
+	if(this.refTypefunctions[refType]){
+		this.refTypefunctions[refType](refArray);
 	}
+	//console.log(refArray[0],refType);
+
 	//console.log("ref array ",refArray, refArray.length);
 }
 
