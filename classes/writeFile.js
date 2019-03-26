@@ -1,5 +1,5 @@
-
-function WriteFile(fs){
+const fs = require('fs');
+function WriteFile(){
 	this.fs = fs
 }
 

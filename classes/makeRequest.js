@@ -13,6 +13,12 @@ function MakeCalls(apiKey,url){
 	this.refTypefunctions = {
 		isWebsite: this.isWebsite
 	};
+	this.yearPattern = /\(\d{4}\)/;
+	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
+	this.emPattern = /\<em\>/;
+	//,\s{1}\d+, this can be used to find a mla journal reference and then filter that out
+	this.volumePattern = /\d+\(\d+\)/;
+	this.mlaJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>/;
 }
 //initialize file writing class for json
 MakeCalls.prototype.createFile = function(data) {
@@ -34,8 +40,57 @@ MakeCalls.prototype.isWebsite = function(data,test){
 	console.log("website function",data,test);
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
-MakeCalls.prototype.checkRefType = function(data){
+MakeCalls.prototype.checkRefType = function(refString,refArray){
+	let refType = "Unknown";
+	//Check if encyclopedia
+	if(refString.search("Encylopedia") !== -1 || refString.search("encylopedia") !== -1){
+		refType = "isEncyclopedia";
+		return refType;
+	}
+	//check if movie
+	else if(refString.search("Producer") !== -1 || refString.search("Director") !== -1){
+		refType = "isMovie";
+		return refType;
+	}
+	//check if website
+	else if(refString.search("Retrieved from URL") !== -1 || refString.search("Retrieved from") !== -1){
+		refType = "isWebsite";
+		return refType;
+	}
 
+	if(this.yearMonthPattern.test(refString)){
+		if(this.volumePattern.test(refString)){
+			refType = "isMagazine";
+			return refType;
+		}
+		else{
+			refType = "isNewspaper";
+			return refType;
+		}
+	}
+	//console.log("mla test",this.mlaJournalPattern.test(refString));
+	if(this.mlaJournalPattern.test(refString)){
+		refType = "mla";
+
+		return refType;
+	}
+
+	//let foundYear = false;
+	for(let i = 0;i < refArray.length;i++){
+		if(this.yearPattern.test(refArray[i])){
+			if(this.emPattern.test(refArray[i + 1])){
+				refType = "isBook";
+				break;
+			}
+			else{
+				refType = "isJournal";
+				break;
+			}
+		}
+
+	}
+
+	return refType;
 }
 
 
@@ -43,12 +98,14 @@ MakeCalls.prototype.checkRefType = function(data){
 MakeCalls.prototype.splitReference = function(referenceText){
 	//const $ = cheerio.load(reference);
 	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
-	let refType = "isWebsite";
-	this.refTypefunctions[refType]("yup","sure");
+	//let refType = "isWebsite";
+	//this.refTypefunctions[refType]("yup","sure");
+	let refType = this.checkRefType(referenceText,refArray);
+	console.log(refArray[0],refType);
 	for(let i = 0;i < refArray.length;i++){
 		//console.log(refArray[i]);
 		if(refArray[i] === ""){
-			c//onsole.log(i,refArray[i],refArray);
+			//console.log(i,refArray[i],refArray);
 		}
 		
 	}
@@ -68,15 +125,12 @@ MakeCalls.prototype.placeItalics = function(reference){
 		let emIndex = fullRefText.search($(emChildren[i]).text())
 		if(emIndex !== -1){
 			let emLength = $(emChildren[i]).text().length
-			//console.log("em index",emIndex);
 			let beforeEm = fullRefText.slice(0,emIndex);
 			let afterEm = fullRefText.slice(emIndex + emLength,fullRefText.length)
-			//console.log("before em", beforeEm);
-			//console.log("after em", afterEm);
 			fullRefText = beforeEm + "<em>" + $(emChildren[i]).text() + "</em>" + afterEm;
 		}
 	}
-	//console.log(fullRefText);
+
 	return fullRefText;
 }
 
@@ -85,7 +139,6 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 	try{
 		if(body !== undefined){
 			let self = this;
-			//console.log("html",body);
 			const $ = cheerio.load(body);
 			const citationContent = $(".CitationContent");
 			console.log("citations ===============================",citationContent.length);
