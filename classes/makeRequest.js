@@ -22,6 +22,12 @@ function MakeCalls(apiKey,url){
 	this.yearPattern = /\(\d{4}\)/;
 	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
 	this.emPattern = /\<em\>/;
+	//up to 3 word publisher
+	this.bookPattern = /\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
+	//this pattern is now matching everything
+	//likely will need to split up pattern to get correct classification
+	this.altBookPattern = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
+	this.bookPatternNoCity = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./
 	//,\s{1}\d+, this can be used to find a mla journal reference and then filter that out
 	this.volumePattern = /\d+\(\d+\)|\<em\>\d+\<\/em\>/;
 	this.mlaJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>/;
@@ -65,6 +71,7 @@ MakeCalls.prototype.isWebsite = function(refArray){
 	refObject.authors = results[0];
 	let titleFound = false
 	let titleArray = [];
+	refObject.year = refArray[afterYearIndex -1];
 	refObject.siteUrl = refArray[refArray.length -1];
 	for(let i = afterYearIndex;i < refArray.length;i++){
 		if(!titleFound){
@@ -82,36 +89,41 @@ MakeCalls.prototype.isWebsite = function(refArray){
 }
 
 MakeCalls.prototype.isEncyclopedia = function(refArray){
-	//console.log("website function",data);
+	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 }
 
 MakeCalls.prototype.isMovie = function(refArray){
-	//console.log("website function",data);
+	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 }
 
 MakeCalls.prototype.isMagazine = function(refArray){
-	//console.log("website function",data);
+	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 }
 
 MakeCalls.prototype.isNewspaper = function(refArray){
-	//console.log("website function",data);
+	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 }
 
 MakeCalls.prototype.isBook = function(refArray){
-	//console.log("website function",data);
-	this.findAuthors(refArray);
-}
-
-MakeCalls.prototype.isJournal = function(refArray){
-	console.log("journal function",refArray);
+	console.log("book function",refArray);
 	let refObject = {};
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
+	refObject.year = refArray[afterYearIndex -1];
+}
+
+MakeCalls.prototype.isJournal = function(refArray){
+	//console.log("journal function",refArray);
+	let refObject = {};
+	let results = this.findAuthors(refArray);
+	let afterYearIndex = results[1] + 1;
+	refObject.authors = results[0];
+	refObject.year = refArray[afterYearIndex -1];
 	let titleFound = false
 	let titleArray = [];
 	let journalTitleFound = false;
@@ -149,7 +161,8 @@ MakeCalls.prototype.isJournal = function(refArray){
 	refObject.journal = journalTitleString;
 	refObject.volume = volumeNum;
 	refObject.issue = issueNum;
-	console.log("site ref object ",refObject);
+	refObject.pages = refArray[refArray.length -1];
+	//console.log("site ref object ",refObject);
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(refString,refArray){
@@ -186,10 +199,14 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 
 		return refType;
 	}
+	if(this.altBookPattern.test(refString)){
+		refType = "isBook";
 
+		return refType;
+	}
 	for(let i = 0;i < refArray.length;i++){
 		if(this.yearPattern.test(refArray[i])){
-			if(this.emPattern.test(refArray[i + 1])){
+			if(this.emPattern.test(refArray[i + 1]) && (this.bookPattern.test(refString))){
 				refType = "isBook";
 				break;
 			}
