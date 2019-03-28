@@ -23,14 +23,16 @@ function MakeCalls(apiKey,url){
 	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
 	this.emPattern = /\<em\>/;
 	//up to 3 word publisher
-	this.bookPattern = /\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
+	//this.bookPattern = /\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
+	this.bookPattern = /\w+\:\s{1}/;
 	//this pattern is now matching everything
-	//likely will need to split up pattern to get correct classification
+	//likely will need to split up pattern to get correct classification split up at (pp) and use standard book pattern
+	this.bookPagePattern =/\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\./;
 	this.altBookPattern = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
 	this.bookPatternNoCity = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./
 	//,\s{1}\d+, this can be used to find a mla journal reference and then filter that out
 	this.volumePattern = /\d+\(\d+\)|\<em\>\d+\<\/em\>/;
-	this.mlaJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>/;
+	this.altJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>|\<em\>\d+,\<\/em\>/;
 }
 //initialize file writing class for json
 MakeCalls.prototype.createFile = function(data) {
@@ -115,6 +117,63 @@ MakeCalls.prototype.isBook = function(refArray){
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
+	let titleFound = false;
+	let titleArray = [];
+	let parentBookTitleFound = false;
+	let parentBookTitleArray = [];
+	let pagesArray = [];
+	let cityFound = false;
+	let cityArray = [];
+	let stateFound = false;
+	let stateArray = [];
+	for(let i = afterYearIndex;i < refArray.length;i++){
+		if(i === afterYearIndex && refArray[i].startsWith("<em>")){
+			parentBookTitleFound = true;
+		}
+
+		if(!titleFound){
+			titleArray.push(refArray[i]);
+		}
+		//end case with a parent title
+		else if(refArray[i].endsWith(".") && !titleFound && !parentBookTitleFound){
+			titleFound = true;
+		}
+		//end case without a parent title
+		else if(refArray[i].endsWith("</em>.") && !titleFound && parentBookTitleFound){
+			titleFound = true;
+		}
+		//capture parent title
+		else if(refArray[i].startsWith("<em>") && titleFound && !parentBookTitleFound){
+			parentBookTitleArray.push(refArray[i]);
+		}
+		//end capture pages
+		else if(refArray[i].startsWith("(") && titleFound && parentBookTitleFound){
+			pagesArray.push(refArray[i])
+		}
+		else if(refArray[i].endsWith(").") && titleFound && parentBookTitleFound){
+			pagesArray.push(refArray[i]);
+		}
+
+		//find state/province
+
+		else if(refArray[i].endsWith(":") && !stateFound){
+			stateArray.push(refArray[i]);
+			stateFound = true;
+		}
+		else if(refArray[i].endsWith(",") && !cityFound){
+			cityArray.push(refArray[i]);
+			cityFound = true;
+		}
+		//handle 2 word cities
+		else if(!cityFound && titleFound && parentBookTitleFound && refArray[i + 1].endsWith(",")){
+			cityArray.push(refArray[i]);
+		}
+		//handle 2 word states
+		else if(!stateFound && titleFound && parentBookTitleFound && refArray[i + 1].endsWith(":")){
+			stateArray.push(refArray[i]);
+		}
+		//need to capture publisher
+	}	
 }
 
 MakeCalls.prototype.isJournal = function(refArray){
@@ -193,13 +252,13 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 			return refType;
 		}
 	}
-	//console.log("mla test",this.mlaJournalPattern.test(refString));
-	if(this.mlaJournalPattern.test(refString)){
-		refType = "mla";
+	//console.log("mla test",this.altJournalPattern.test(refString));
+	if(this.altJournalPattern.test(refString)){
+		refType = "isJournalNoIssue";
 
 		return refType;
 	}
-	if(this.altBookPattern.test(refString)){
+	if(this.bookPagePattern.test(refString)){
 		refType = "isBook";
 
 		return refType;
@@ -230,8 +289,12 @@ MakeCalls.prototype.splitReference = function(referenceText){
 	if(this.refTypefunctions[refType]){
 		this.refTypefunctions[refType](refArray);
 	}
+	/*
+	if(refType === "Unknown"){
+		console.log(refArray[0],refType);
+	}
+	*/
 	console.log(refArray[0],refType);
-
 	//console.log("ref array ",refArray, refArray.length);
 }
 
