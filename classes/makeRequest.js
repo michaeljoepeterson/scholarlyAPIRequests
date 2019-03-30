@@ -110,9 +110,14 @@ MakeCalls.prototype.isNewspaper = function(refArray){
 	this.findAuthors(refArray);
 }
 
-MakeCalls.prototype.isBook = function(refArray){
+MakeCalls.prototype.isBook = function(refArray,refString){
 	console.log("book function",refArray);
 	let refObject = {};
+	let emTitleRegex = /\<em\>\w+\<\/em\>/g;
+	//capture any em titles, if there are 2 then 1st should be book title second should be parent book
+	let emTitleMatches = refString.match(emTitleRegex);
+	let pageMatch = refString.match(this.bookPagePattern);
+	console.log(pageMatch);
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
@@ -121,12 +126,15 @@ MakeCalls.prototype.isBook = function(refArray){
 	let titleArray = [];
 	let parentBookTitleFound = false;
 	let parentBookTitleArray = [];
-	let pagesArray = [];
 	let cityFound = false;
 	let cityArray = [];
 	let stateFound = false;
 	let stateArray = [];
+	let publisherIndex = 0;
+	let publisherArray = [];
 	for(let i = afterYearIndex;i < refArray.length;i++){
+		//case when no parent book
+		
 		if(i === afterYearIndex && refArray[i].startsWith("<em>")){
 			parentBookTitleFound = true;
 		}
@@ -134,24 +142,23 @@ MakeCalls.prototype.isBook = function(refArray){
 		if(!titleFound){
 			titleArray.push(refArray[i]);
 		}
-		//end case with a parent title
-		else if(refArray[i].endsWith(".") && !titleFound && !parentBookTitleFound){
+		else if(!parentBookTitleFound){
+			parentBookTitleArray.push(refArray[i]);
+		}
+		//end case with a parent title the problem is it will always kick out at the first if 
+		
+		if(refArray[i].endsWith(".") && !titleFound && !parentBookTitleFound){
+			
 			titleFound = true;
 		}
+		//console.log(refArray[i]);
 		//end case without a parent title
-		else if(refArray[i].endsWith("</em>.") && !titleFound && parentBookTitleFound){
+		if(refArray[i].endsWith("</em>.") && !titleFound && parentBookTitleFound){
 			titleFound = true;
 		}
 		//capture parent title
 		else if(refArray[i].startsWith("<em>") && titleFound && !parentBookTitleFound){
-			parentBookTitleArray.push(refArray[i]);
-		}
-		//end capture pages
-		else if(refArray[i].startsWith("(") && titleFound && parentBookTitleFound){
-			pagesArray.push(refArray[i])
-		}
-		else if(refArray[i].endsWith(").") && titleFound && parentBookTitleFound){
-			pagesArray.push(refArray[i]);
+			parentBookTitleFound = true;
 		}
 
 		//find state/province
@@ -164,21 +171,49 @@ MakeCalls.prototype.isBook = function(refArray){
 			cityArray.push(refArray[i]);
 			cityFound = true;
 		}
-		//handle 2 word cities
-		else if(!cityFound && titleFound && parentBookTitleFound && refArray[i + 1].endsWith(",")){
-			cityArray.push(refArray[i]);
-		}
+		
+
 		//handle 2 word states
+		else if(!stateFound && refArray[i].endsWith(":")){
+			stateArray.push(refArray[i]);
+			stateFound = true;
+			cityFound = true;
+		}
 		else if(!stateFound && titleFound && parentBookTitleFound && refArray[i + 1].endsWith(":")){
 			stateArray.push(refArray[i]);
+			cityFound = true;
+			publisherIndex = i;
+
 		}
-		//need to capture publisher
-	}	
+		//handle 2 word cities
+		else if(!cityFound && refArray[i].endsWith(",")){
+			cityArray.push(refArray[i]);
+			cityFound = true;
+		}
+		else if(!cityFound && titleFound && parentBookTitleFound && refArray[i + 1] && refArray[i + 1].endsWith(",")){
+			cityArray.push(refArray[i]);
+		}
+		//capture publisher
+		else if(i >= publisherIndex){
+			publisherArray.push(refArray[i]);
+		}	
+	}
+
+	refObject.title = titleArray.join(" ");
+	refObject.parentBook = parentBookTitleArray.join(" ");
+	refObject.pages = pageMatch ? pageMatch[0] : null;
+	refObject.state = stateArray.join(" ");
+	refObject.city = cityArray.join(" ");
+	refObject.publisher = publisherArray.join(" ");
+
+	console.log(refObject);
+
 }
 
-MakeCalls.prototype.isJournal = function(refArray){
+MakeCalls.prototype.isJournal = function(refArray,refString){
 	//console.log("journal function",refArray);
 	let refObject = {};
+
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
@@ -287,14 +322,14 @@ MakeCalls.prototype.splitReference = function(referenceText){
 
 	let refType = this.checkRefType(referenceText,refArray);
 	if(this.refTypefunctions[refType]){
-		this.refTypefunctions[refType](refArray);
+		this.refTypefunctions[refType](refArray,referenceText);
 	}
 	/*
 	if(refType === "Unknown"){
 		console.log(refArray[0],refType);
 	}
 	*/
-	console.log(refArray[0],refType);
+	//console.log(refArray[0],refType);
 	//console.log("ref array ",refArray, refArray.length);
 }
 
@@ -316,8 +351,8 @@ MakeCalls.prototype.placeItalics = function(reference){
 			fullRefText = beforeEm + "<em>" + $(emChildren[i]).text() + "</em>" + afterEm;
 		}
 	}
-
-	return fullRefText;
+	//console.log(fullRefText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim());
+	return fullRefText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim();
 }
 
 
