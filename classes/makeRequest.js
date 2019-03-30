@@ -25,6 +25,7 @@ function MakeCalls(apiKey,url){
 	//up to 3 word publisher
 	//this.bookPattern = /\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
 	this.bookPattern = /\w+\:\s{1}/;
+	//this.textbookPattern = /\(\d{4}\)\.(.+?)/;
 	//this pattern is now matching everything
 	//likely will need to split up pattern to get correct classification split up at (pp) and use standard book pattern
 	this.bookPagePattern =/\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\./;
@@ -110,25 +111,37 @@ MakeCalls.prototype.isNewspaper = function(refArray){
 	this.findAuthors(refArray);
 }
 
+
 MakeCalls.prototype.isBook = function(refArray,refString){
 	console.log("book function",refArray);
 	let refObject = {};
 	let emTitleRegex = /\<em\>(.+?)\<\/em\>/g;
-	//capture any em titles, if there are 2 then 1st should be book title second should be parent book
-	
+	//match regular title no em
+	let titleInTextbook = /\(\d{4}\)\.[^<]*\.\)*,*/g;
+	let cityRegex = /(\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\.|<\/em\>\.)(.+?),/g
+	let cityMatches = refString.match(cityRegex);
 	let emTitleMatches = refString.match(emTitleRegex);
-
+	let titleInTextbookMatches = refString.match(titleInTextbook);
+	//handle pages
 	let pageMatch = refString.match(this.bookPagePattern);
-	
-	console.log(emTitleMatches,emTitleMatches.length);
+	if(cityMatches){
+		refObject.city = cityMatches[0].replace(/\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\./,"").replace(/<\/em\>\./,"").replace(/\s+/,"").replace(/,/,"");
+	}
+	console.log(cityMatches);
+	//if it is textbook
+	if(emTitleMatches && titleInTextbookMatches){
+		refObject.title = titleInTextbookMatches[0].replace(/\(\d{4}\)\.\s{1}/,"");
+		refObject.textBook = emTitleMatches[0];
+	}
+	else{
+		refObject.title = emTitleMatches[0];
+		refObject.textBook = null;
+	}
+	//handle author and year
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
-	let titleFound = false;
-	let titleArray = [];
-	let parentBookTitleFound = false;
-	let parentBookTitleArray = [];
 	let cityFound = false;
 	let cityArray = [];
 	let stateFound = false;
@@ -136,37 +149,10 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	let publisherIndex = 0;
 	let publisherArray = [];
 	for(let i = afterYearIndex;i < refArray.length;i++){
-		//case when no parent book
 		
-		if(i === afterYearIndex && refArray[i].startsWith("<em>")){
-			parentBookTitleFound = true;
-		}
-
-		if(!titleFound){
-			titleArray.push(refArray[i]);
-		}
-		else if(!parentBookTitleFound){
-			parentBookTitleArray.push(refArray[i]);
-		}
-		//end case with a parent title the problem is it will always kick out at the first if 
-		
-		if(refArray[i].endsWith(".") && !titleFound && !parentBookTitleFound){
-			
-			titleFound = true;
-		}
-		//console.log(refArray[i]);
-		//end case without a parent title
-		if(refArray[i].endsWith("</em>.") && !titleFound && parentBookTitleFound){
-			titleFound = true;
-		}
-		//capture parent title
-		else if(refArray[i].startsWith("<em>") && titleFound && !parentBookTitleFound){
-			parentBookTitleFound = true;
-		}
-
 		//find state/province
 
-		else if(refArray[i].endsWith(":") && !stateFound){
+		 if(refArray[i].endsWith(":") && !stateFound){
 			stateArray.push(refArray[i]);
 			stateFound = true;
 		}
@@ -182,7 +168,7 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 			stateFound = true;
 			cityFound = true;
 		}
-		else if(!stateFound && titleFound && parentBookTitleFound && refArray[i + 1].endsWith(":")){
+		else if(!stateFound && refArray[i + 1].endsWith(":")){
 			stateArray.push(refArray[i]);
 			cityFound = true;
 			publisherIndex = i;
@@ -193,7 +179,7 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 			cityArray.push(refArray[i]);
 			cityFound = true;
 		}
-		else if(!cityFound && titleFound && parentBookTitleFound && refArray[i + 1] && refArray[i + 1].endsWith(",")){
+		else if(!cityFound && refArray[i + 1] && refArray[i + 1].endsWith(",")){
 			cityArray.push(refArray[i]);
 		}
 		//capture publisher
@@ -202,14 +188,11 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 		}	
 	}
 
-	refObject.title = titleArray.join(" ");
-	refObject.parentBook = parentBookTitleArray.join(" ");
 	refObject.pages = pageMatch ? pageMatch[0] : null;
 	refObject.state = stateArray.join(" ");
-	refObject.city = cityArray.join(" ");
 	refObject.publisher = publisherArray.join(" ");
 
-	//console.log(refObject);
+	console.log(refObject);
 
 }
 
