@@ -113,11 +113,14 @@ MakeCalls.prototype.isNewspaper = function(refArray){
 MakeCalls.prototype.isBook = function(refArray,refString){
 	console.log("book function",refArray);
 	let refObject = {};
-	let emTitleRegex = /\<em\>\w+\<\/em\>/g;
+	let emTitleRegex = /\<em\>(.+?)\<\/em\>/g;
 	//capture any em titles, if there are 2 then 1st should be book title second should be parent book
+	
 	let emTitleMatches = refString.match(emTitleRegex);
+
 	let pageMatch = refString.match(this.bookPagePattern);
-	console.log(pageMatch);
+	
+	console.log(emTitleMatches,emTitleMatches.length);
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
@@ -206,7 +209,7 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	refObject.city = cityArray.join(" ");
 	refObject.publisher = publisherArray.join(" ");
 
-	console.log(refObject);
+	//console.log(refObject);
 
 }
 
