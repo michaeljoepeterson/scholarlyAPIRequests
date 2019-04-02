@@ -118,16 +118,27 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	let emTitleRegex = /\<em\>(.+?)\<\/em\>/g;
 	//match regular title no em
 	let titleInTextbook = /\(\d{4}\)\.[^<]*\.\)*,*/g;
-	let cityRegex = /(\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\.|<\/em\>\.)(.+?),/g
+	let cityRegex = /(?<=\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\.|<\/em\>\.)(.+?),/g;
+	let stateRegex = /(?<=\<\/em\>\.|ed\.\)\.|(-|\u2013|\u2014)\d+\)\.)(.+?)\:/g;
+	let stateMatches = refString.match(stateRegex);
 	let cityMatches = refString.match(cityRegex);
 	let emTitleMatches = refString.match(emTitleRegex);
 	let titleInTextbookMatches = refString.match(titleInTextbook);
 	//handle pages
 	let pageMatch = refString.match(this.bookPagePattern);
 	if(cityMatches){
-		refObject.city = cityMatches[0].replace(/\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\./,"").replace(/<\/em\>\./,"").replace(/\s+/,"").replace(/,/,"");
+		refObject.city = cityMatches[0].trim();
 	}
-	console.log(cityMatches);
+	else{
+		refObject.city = null;
+	}
+	if(stateMatches){
+		refObject.state = stateMatches[0].replace(refObject.city,"").replace(",","").trim();
+	}
+	else{
+
+	}
+	console.log("city matches======",cityMatches);
 	//if it is textbook
 	if(emTitleMatches && titleInTextbookMatches){
 		refObject.title = titleInTextbookMatches[0].replace(/\(\d{4}\)\.\s{1}/,"");
@@ -142,55 +153,10 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
-	let cityFound = false;
-	let cityArray = [];
-	let stateFound = false;
-	let stateArray = [];
-	let publisherIndex = 0;
-	let publisherArray = [];
-	for(let i = afterYearIndex;i < refArray.length;i++){
-		
-		//find state/province
-
-		 if(refArray[i].endsWith(":") && !stateFound){
-			stateArray.push(refArray[i]);
-			stateFound = true;
-		}
-		else if(refArray[i].endsWith(",") && !cityFound){
-			cityArray.push(refArray[i]);
-			cityFound = true;
-		}
-		
-
-		//handle 2 word states
-		else if(!stateFound && refArray[i].endsWith(":")){
-			stateArray.push(refArray[i]);
-			stateFound = true;
-			cityFound = true;
-		}
-		else if(!stateFound && refArray[i + 1].endsWith(":")){
-			stateArray.push(refArray[i]);
-			cityFound = true;
-			publisherIndex = i;
-
-		}
-		//handle 2 word cities
-		else if(!cityFound && refArray[i].endsWith(",")){
-			cityArray.push(refArray[i]);
-			cityFound = true;
-		}
-		else if(!cityFound && refArray[i + 1] && refArray[i + 1].endsWith(",")){
-			cityArray.push(refArray[i]);
-		}
-		//capture publisher
-		else if(i >= publisherIndex){
-			publisherArray.push(refArray[i]);
-		}	
-	}
 
 	refObject.pages = pageMatch ? pageMatch[0] : null;
-	refObject.state = stateArray.join(" ");
-	refObject.publisher = publisherArray.join(" ");
+	//refObject.state = stateArray.join(" ");
+	//refObject.publisher = publisherArray.join(" ");
 
 	console.log(refObject);
 
