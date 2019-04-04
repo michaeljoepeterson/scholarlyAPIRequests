@@ -120,6 +120,8 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	let titleInTextbook = /\(\d{4}\)\.[^<]*\.\)*,*/g;
 	let cityRegex = /(?<=\(pp\.\s{1}\d+(-|\u2013|\u2014)\d+\)\.|<\/em\>\.)(.+?),/g;
 	let stateRegex = /(?<=\<\/em\>\.|ed\.\)\.|(-|\u2013|\u2014)\d+\)\.)(.+?)\:/g;
+	let publisherRegex =/(?<=\w+:)(.+?)\./g;
+	let publisherMatches = refString.match(publisherRegex);
 	let stateMatches = refString.match(stateRegex);
 	let cityMatches = refString.match(cityRegex);
 	let emTitleMatches = refString.match(emTitleRegex);
@@ -138,7 +140,7 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	else{
 
 	}
-	console.log("city matches======",cityMatches);
+	console.log("publisher matches======",publisherMatches);
 	//if it is textbook
 	if(emTitleMatches && titleInTextbookMatches){
 		refObject.title = titleInTextbookMatches[0].replace(/\(\d{4}\)\.\s{1}/,"");
