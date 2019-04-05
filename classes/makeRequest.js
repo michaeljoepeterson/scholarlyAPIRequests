@@ -17,7 +17,8 @@ function MakeCalls(apiKey,url){
 		isMagazine: this.isMagazine.bind(this),
 		isNewspaper:this.isNewspaper.bind(this),
 		isBook:this.isBook.bind(this),
-		isJournal:this.isJournal.bind(this)
+		isJournal:this.isJournal.bind(this),
+		isJournalNoIssue:this.isJournalNoIssue.bind(this)
 	};
 	this.yearPattern = /\(\d{4}\)/;
 	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
@@ -94,26 +95,30 @@ MakeCalls.prototype.isWebsite = function(refArray){
 MakeCalls.prototype.isEncyclopedia = function(refArray){
 	//console.log("website function",refArray);
 	this.findAuthors(refArray);
+	return {}
 }
 
 MakeCalls.prototype.isMovie = function(refArray){
 	//console.log("website function",refArray);
 	this.findAuthors(refArray);
+	return {}
 }
 
 MakeCalls.prototype.isMagazine = function(refArray){
 	//console.log("website function",refArray);
 	this.findAuthors(refArray);
+	return {}
 }
 
 MakeCalls.prototype.isNewspaper = function(refArray){
 	//console.log("website function",refArray);
 	this.findAuthors(refArray);
+	return {}
 }
 
 
 MakeCalls.prototype.isBook = function(refArray,refString){
-	console.log("book function",refArray);
+	//console.log("book function",refArray);
 	let refObject = {};
 	let emTitleRegex = /\<em\>(.+?)\<\/em\>/g;
 	//match regular title no em
@@ -138,9 +143,15 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 		refObject.state = stateMatches[0].replace(refObject.city,"").replace(",","").trim();
 	}
 	else{
-
+		refObject.state = null;
 	}
-	console.log("publisher matches======",publisherMatches);
+	if(publisherMatches){
+		refObject.publisher = publisherMatches[publisherMatches.length - 1];
+	}
+	else{
+		refObject.publisher = null;
+	}
+	//console.log("publisher matches======",publisherMatches);
 	//if it is textbook
 	if(emTitleMatches && titleInTextbookMatches){
 		refObject.title = titleInTextbookMatches[0].replace(/\(\d{4}\)\.\s{1}/,"");
@@ -160,8 +171,13 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	//refObject.state = stateArray.join(" ");
 	//refObject.publisher = publisherArray.join(" ");
 
-	console.log(refObject);
+	//console.log(refObject);
+	return refObject;
+}
 
+MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
+
+	return {}
 }
 
 MakeCalls.prototype.isJournal = function(refArray,refString){
@@ -211,6 +227,7 @@ MakeCalls.prototype.isJournal = function(refArray,refString){
 	refObject.issue = issueNum;
 	refObject.pages = refArray[refArray.length -1];
 	//console.log("site ref object ",refObject);
+	return refObject;
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(refString,refArray){
@@ -275,8 +292,11 @@ MakeCalls.prototype.splitReference = function(referenceText){
 	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
 
 	let refType = this.checkRefType(referenceText,refArray);
+	let referenceObject;
 	if(this.refTypefunctions[refType]){
-		this.refTypefunctions[refType](refArray,referenceText);
+		referenceObject = this.refTypefunctions[refType](refArray,referenceText);
+		referenceObject.type = refType;
+		//console.log(referenceObject);
 	}
 	/*
 	if(refType === "Unknown"){
@@ -285,6 +305,7 @@ MakeCalls.prototype.splitReference = function(referenceText){
 	*/
 	//console.log(refArray[0],refType);
 	//console.log("ref array ",refArray, refArray.length);
+	return referenceObject;
 }
 
 //place em tags in correct place
@@ -321,15 +342,19 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 			for(let i = 0;i < citationContent.length;i++){
 				//console.log($(citationContent[i]).text());
 				let emText = this.placeItalics($(citationContent[i]));
-				this.splitReference(emText);
+				let refInfo = this.splitReference(emText);
 				this.referenceData.results.push({
 					id:this.idCounter,
-					rawText:emText
+					rawText:emText,
+					referenceInfo: refInfo
 				});
 				this.idCounter++
 			}
-			
+			//this should be the finished data
 			//console.log(this.referenceData);
+			for(let i = 0; i < this.referenceData.results.length;i++){
+				console.log(this.referenceData.results[i].referenceInfo);
+			}
 		}
 	}
 	catch(error){
