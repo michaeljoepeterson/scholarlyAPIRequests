@@ -9,6 +9,9 @@ function MakeCalls(apiKey,url){
 	this.referenceData = {
 		results:[]
 	};
+	//this could probably be avoided with promises if set up properly
+	this.urls = [];
+	this.urlIndex = 0;
 	this.idCounter = 0;
 	this.refTypefunctions = {
 		isWebsite: this.isWebsite.bind(this),
@@ -34,7 +37,7 @@ function MakeCalls(apiKey,url){
 	this.bookPatternNoCity = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./
 	//,\s{1}\d+, this can be used to find a mla journal reference and then filter that out
 	this.volumePattern = /\d+\(\d+\)|\<em\>\d+\<\/em\>/;
-	this.altJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>|\<em\>\d+,\<\/em\>/;
+	this.altJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>|\<em\>\d+,\<\/em\>|\<em\>\d+\<\/em\>/;
 }
 //initialize file writing class for json
 MakeCalls.prototype.createFile = function(data) {
@@ -177,7 +180,14 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 
 MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 
-	return {}
+	let refObject = {};
+
+	let results = this.findAuthors(refArray);
+	let afterYearIndex = results[1] + 1;
+	refObject.authors = results[0];
+	refObject.year = refArray[afterYearIndex -1];
+
+	return refObject;
 }
 
 MakeCalls.prototype.isJournal = function(refArray,refString){
@@ -313,9 +323,9 @@ MakeCalls.prototype.splitReference = function(referenceText){
 MakeCalls.prototype.placeItalics = function(reference){
 	const $ = cheerio.load(reference);
 	let fullRefText = $(reference).text();
-	const emChildren = $(reference).children(".EmphasisTypeItalic ");
+	const emChildren = $(reference).children(".EmphasisTypeItalic");
 	const emText = emChildren.text();
-
+	console.log(emText);
 	for(let i = 0;i < emChildren.length;i++){
 
 		let emIndex = fullRefText.search($(emChildren[i]).text())
@@ -326,7 +336,7 @@ MakeCalls.prototype.placeItalics = function(reference){
 			fullRefText = beforeEm + "<em>" + $(emChildren[i]).text() + "</em>" + afterEm;
 		}
 	}
-	//console.log(fullRefText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim());
+
 	return fullRefText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim();
 }
 
@@ -340,20 +350,28 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 			console.log("citations ===============================",citationContent.length);
 			
 			for(let i = 0;i < citationContent.length;i++){
-				//console.log($(citationContent[i]).text());
-				let emText = this.placeItalics($(citationContent[i]));
-				let refInfo = this.splitReference(emText);
-				this.referenceData.results.push({
-					id:this.idCounter,
-					rawText:emText,
-					referenceInfo: refInfo
-				});
-				this.idCounter++
+
+				try{
+					let emText = this.placeItalics($(citationContent[i]));
+					let refInfo = this.splitReference(emText);
+					this.referenceData.results.push({
+						id:this.idCounter,
+						rawText:emText,
+						referenceInfo: refInfo,
+						//url:this.urls[this.urlIndex]
+					});
+					this.idCounter++;
+				}
+				catch(err){
+					console.log("errror in articleRequestMade",err);
+				}
+				
 			}
+			//this.urlIndex++;
 			//this should be the finished data
 			//console.log(this.referenceData);
 			for(let i = 0; i < this.referenceData.results.length;i++){
-				console.log(this.referenceData.results[i].referenceInfo);
+				//console.log(this.referenceData.results[i].rawText);
 			}
 		}
 	}
@@ -379,6 +397,7 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 			//console.log("apikey===========",this.apiKey)
 			for(let i = 0;i < parsedBody.records.length;i++){
 				console.log("urls",parsedBody.records[i].url[0].value, i)
+				this.urls.push(parsedBody.records[i].url[0].value);
 				this.getReferences(parsedBody.records[i].url[0].value);
 			}
 		}
