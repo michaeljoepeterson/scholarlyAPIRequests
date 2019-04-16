@@ -23,7 +23,7 @@ function MakeCalls(apiKey,url){
 		isJournal:this.isJournal.bind(this),
 		isJournalNoIssue:this.isJournalNoIssue.bind(this)
 	};
-	this.yearPattern = /\(\d{4}\)/;
+	this.yearPattern = /\(\d{4}\w*\)/;
 	this.yearMonthPattern = /\(\d{4},\s\w+\s{0,1}\d{0,2}\)/;
 	this.emPattern = /\<em\>/;
 	//up to 3 word publisher
@@ -187,6 +187,10 @@ MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
 
+	let titleRegex = /(?<=\(\d{4}\w*\)\.\s+)(.*?)(\.|\?)(?=\s{1}\<)/g
+	let titleMatches = refString.match(titleRegex);
+	//console.log("title matches",titleMatches,refObject.authors);
+	console.log(refObject);
 	return refObject;
 }
 
@@ -325,10 +329,12 @@ MakeCalls.prototype.placeItalics = function(reference){
 	let fullRefText = $(reference).text();
 	const emChildren = $(reference).children(".EmphasisTypeItalic");
 	const emText = emChildren.text();
-	console.log(emText);
+	//console.log(emText);
 	for(let i = 0;i < emChildren.length;i++){
+		let startYearIndex = fullRefText.search(this.yearPattern);
+		let yearEndIndex = startYearIndex + 6;
 
-		let emIndex = fullRefText.search($(emChildren[i]).text())
+		let emIndex = fullRefText.search($(emChildren[i]).text().slice(yearEndIndex)) - 6;
 		if(emIndex !== -1){
 			let emLength = $(emChildren[i]).text().length
 			let beforeEm = fullRefText.slice(0,emIndex);
