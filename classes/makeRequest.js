@@ -177,7 +177,7 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	//console.log(refObject);
 	return refObject;
 }
-
+//will have to modify this depending on how they place italics
 MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 
 	let refObject = {};
@@ -189,9 +189,19 @@ MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 
 	let titleRegex = /(?<=\(\d{4}\w*\)\.\s+)(.*?)(\.|\?)(?=\s{1}\<)/g
 	let titleMatches = refString.match(titleRegex);
+	let journalTitleRegex = /(?<=\<em\>)(.*?)(?=,)/g
+	let journaltitleMatches = refString.match(journalTitleRegex);
 	refObject.title = titleMatches[0];
-	//console.log("title matches",titleMatches,refObject.authors);
-	//console.log(refObject);
+	refObject.journal = journaltitleMatches[0]; 
+	let volumeRegex = /(\d*?)(?=\<\/em\>)/g;
+	let volumeMatch = refString.match(volumeRegex);
+	refObject.volume = volumeMatch[0];
+	let pagesRegex = /(?<=\<\/em\>)(.*?)\./g;
+	let pageMatch = refString.match(pagesRegex);
+	
+	refObject.pages = pageMatch[0];
+	console.log(refObject);
+	//console.log(refObject.authors,pageMatch);
 	return refObject;
 }
 //will have to modify for volume/issue
