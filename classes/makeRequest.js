@@ -171,9 +171,6 @@ MakeCalls.prototype.isBook = function(refArray,refString){
 	refObject.year = refArray[afterYearIndex -1];
 
 	refObject.pages = pageMatch ? pageMatch[0] : null;
-	//refObject.state = stateArray.join(" ");
-	//refObject.publisher = publisherArray.join(" ");
-
 	//console.log(refObject);
 	return refObject;
 }
@@ -187,9 +184,9 @@ MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
 
-	let titleRegex = /(?<=\(\d{4}\w*\)\.\s+)(.*?)(\.|\?)(?=\s{1}\<)/g
+	let titleRegex = /(?<=\(\d{4}\w*\)\.\s+)(.*?)(\.|\?)(?=\s{1}\<)/g;
 	let titleMatches = refString.match(titleRegex);
-	let journalTitleRegex = /(?<=\<em\>)(.*?)(?=,)/g
+	let journalTitleRegex = /(?<=\<em\>)(.*?)(?=,)/g;
 	let journaltitleMatches = refString.match(journalTitleRegex);
 	refObject.title = titleMatches[0];
 	refObject.journal = journaltitleMatches[0]; 
@@ -200,58 +197,34 @@ MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 	let pageMatch = refString.match(pagesRegex);
 	
 	refObject.pages = pageMatch[0];
-	console.log(refObject);
-	//console.log(refObject.authors,pageMatch);
+	//console.log(refObject);
 	return refObject;
 }
 //will have to modify for volume/issue
 MakeCalls.prototype.isJournal = function(refArray,refString){
-	//console.log("journal function",refArray);
 	let refObject = {};
 
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
-	let titleFound = false
-	let titleArray = [];
-	let journalTitleFound = false;
-	let journaltitleArray = [];
-	let volumeNum = "";
-	let issueNum = "";
-	for(let i = afterYearIndex;i < refArray.length;i++){
-		//capture article title
-		if(!titleFound){
-			titleArray.push(refArray[i]);
-		}
-		//capture journal title
-		else if(titleFound && !journalTitleFound){
-			journaltitleArray.push(refArray[i])
-		}
-		//capture journal volume and issue
-		else if(titleFound && journalTitleFound && refArray[i].startsWith('<em>')){
-			let volumeString = refArray[i].replace("<em>","").replace("</em>"," ");
-			let volumeArr = volumeString.split(" ");
-			volumeNum = "<em>" + volumeArr[0] + "</em>";
-			issueNum = volumeArr[1];
-		}
+	let titleRegex = /(?<=\(\d{4}\w*\)\.\s+)(.*?)(\.|\?)(?=\s{1}\<)/g;
+	let titleMatches = refString.match(titleRegex);
+	refObject.title = titleMatches[0];
+	let journalTitleRegex = /(?<=\<em\>)(.*?)(?=,)/g;
+	let journaltitleMatches = refString.match(journalTitleRegex);
+	refObject.journal = journaltitleMatches[0];
+	let volumeRegex = /(?<=\,\s{1})(\d*?)(?=\<\/em\>)/g;
+	let volumeMatch = refString.match(volumeRegex);
+	refObject.volume = volumeMatch[0];
+	let issueRegex = /(?<=\<\/em\>\()(\d*?)(?=\)\,)/g;
+	let issueMatch = refString.match(issueRegex);
+	refObject.issue = issueMatch[0];
+	let pagesRegex = /(?<=\)\,)(.*?)\./g;
+	let pageMatch = refString.match(pagesRegex);
+	refObject.pages = pageMatch[0];
 
-		if(refArray[i].endsWith(".") && !titleFound){
-			titleFound = true;
-		}
-		if(refArray[i].endsWith("</em>") && !journalTitleFound){
-			journalTitleFound = true;
-		}	
-	}
-
-	let titleString = titleArray.join(" ");
-	refObject.title = titleString;
-	let journalTitleString = journaltitleArray.join(" ");
-	refObject.journal = journalTitleString;
-	refObject.volume = volumeNum;
-	refObject.issue = issueNum;
-	refObject.pages = refArray[refArray.length -1];
-	//console.log("joural ref object ",refObject);
+	console.log("joural ref object ",refObject);
 	return refObject;
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
@@ -283,7 +256,7 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 			return refType;
 		}
 	}
-	//console.log("mla test",this.altJournalPattern.test(refString));
+
 	if(this.altJournalPattern.test(refString) && !this.volumePattern.test(refString)){
 		refType = "isJournalNoIssue";
 
@@ -321,15 +294,12 @@ MakeCalls.prototype.splitReference = function(referenceText){
 	if(this.refTypefunctions[refType]){
 		referenceObject = this.refTypefunctions[refType](refArray,referenceText);
 		referenceObject.type = refType;
-		//console.log(referenceObject);
 	}
 	/*
 	if(refType === "Unknown"){
 		console.log(refArray[0],refType);
 	}
 	*/
-	//console.log(refArray[0],refType);
-	//console.log("ref array ",refArray, refArray.length);
 	return referenceObject;
 }
 
@@ -345,8 +315,7 @@ MakeCalls.prototype.placeItalics = function(reference){
 		let startYearIndex = fullRefText.search(this.yearPattern);
 		let yearEndIndex = startYearIndex + 6;
 
-		let emIndex = fullRefText.search($(emChildren[i]).text());//.slice(yearEndIndex)) + yearEndIndex;
-		//console.log(yearEndIndex,emIndex);
+		let emIndex = fullRefText.search($(emChildren[i]).text());
 		if(emIndex !== -1){
 			let emLength = $(emChildren[i]).text().length
 			let beforeEm = fullRefText.slice(0,emIndex);
@@ -377,7 +346,7 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 						id:this.idCounter,
 						rawText:emText,
 						referenceInfo: refInfo,
-						//url:this.urls[this.urlIndex]
+						
 					});
 					this.idCounter++;
 				}
@@ -388,7 +357,7 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 			}
 			//this.urlIndex++;
 			//this should be the finished data
-			//console.log(this.referenceData);
+			
 			for(let i = 0; i < this.referenceData.results.length;i++){
 				//console.log(this.referenceData.results[i].rawText);
 			}
@@ -398,7 +367,8 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 		console.log("error article", error);
 	}
 }
-
+//need this to return a promise and have article request function a anonymous function so that writing to the file can occur at the end of structuring all the data
+//unless only run one article at a time
 MakeCalls.prototype.getReferences = function(articleUrl) {
 	const options = {
 		url:articleUrl
@@ -409,14 +379,13 @@ MakeCalls.prototype.getReferences = function(articleUrl) {
 
 MakeCalls.prototype.requestMade = function(error,response,body) {
 	try{
-		//console.log("body===========",response)
+
 		if(body !== undefined){
 			const parsedBody = JSON.parse(body);
 			;
-			//console.log("apikey===========",this.apiKey)
+
 			for(let i = 0;i < parsedBody.records.length;i++){
-				//console.log("urls",parsedBody.records[i].url[0].value, i)
-				//this.urls.push(parsedBody.records[i].url[0].value);
+
 				this.getReferences(parsedBody.records[i].url[0].value);
 			}
 		}
@@ -429,6 +398,11 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 }
 //make the actual request
 //to continue at next set of results it is p + 1
+//may also want to figure out how to return a promise from this
+//===========================================
+//will likely need to make this not a class 
+//will also need to make a router eventually that I can use to make request and pass the p value
+//===========================================
 MakeCalls.prototype.makeRequest = function(){
 	const options = {
 		url:this.url,
