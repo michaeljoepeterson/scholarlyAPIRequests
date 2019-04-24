@@ -376,13 +376,13 @@ MakeCalls.prototype.getReferences = function(articleUrl) {
 
 	this.request(options,this.articleRequestMade.bind(this));
 }
-
+/*
 MakeCalls.prototype.requestMade = function(error,response,body) {
 	try{
 
 		if(body !== undefined){
 			const parsedBody = JSON.parse(body);
-			;
+			
 
 			for(let i = 0;i < parsedBody.records.length;i++){
 
@@ -396,6 +396,7 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 	}
 	
 }
+*/
 //make the actual request
 //to continue at next set of results it is p + 1
 //may also want to figure out how to return a promise from this
@@ -403,19 +404,27 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 //will likely need to make this not a class 
 //will also need to make a router eventually that I can use to make request and pass the p value
 //===========================================
-MakeCalls.prototype.makeRequest = function(){
-	const options = {
+MakeCalls.prototype.makeRequest = function(pVal){
+	let promise = new Promise((resolve,reject) => {
+		const options = {
 		url:this.url,
 		qs:{
 			api_key:this.apiKey,
 			q:"subject:Psychology openaccess:true",
 			output:"json",
-			p:"2"
+			p:pVal
 
-		}
-	};
+			}
+		};
 
-	this.request(options,this.requestMade.bind(this));
+		this.request(options,function(errror,response,body){
+			const parsedBody = JSON.parse(body);
+			resolve(parsedBody);
+		});
+	});
+	
+
+	return promise;
 }
 
 
