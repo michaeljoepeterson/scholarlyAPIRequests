@@ -16,13 +16,43 @@ router.get("/",(req,res)=>{
     return makeCalls.makeRequest(pVal)
 
     .then(parsedData => {
-    	for(let i = 0;i < parsedData.records.length;i++){
+    	let articleUrls = [];
 
-			console.log("url: ",parsedData.records[i].url[0].value);
+    	for(let i = 0;i < parsedData.records.length;i++){
+    		articleUrls.push(parsedData.records[i].url[0].value);
+			//console.log("url: ",parsedData.records[i].url[0].value);
 		}
+		let citations = [];
+
+		/*
+		https://css-tricks.com/why-using-reduce-to-sequentially-resolve-promises-works/
+		articleUrls.forEach(url => {
+
+		})
+		*/
+		//get undefined first cus of first promise
+		//then get first set of citations then second in the next then
+		return articleUrls.reduce(function(previous,item){
+			return previous.then(citationData => {
+				//console.log(citationData); 
+				return makeCalls.getReferences(item).then(Array.prototype.concat.bind(citationData))
+				//.then(data => [...data])
+			})
+		}, Promise.resolve([]))
+		
+		/*
+		return articleUrls.forEach(function(url){
+			return makeCalls.getReferences(url)
+			.then(citationsData => {
+				console.log(citationsData.text());
+				//citations.push(citationsData);
+			})
+		})
+		*/
     })
 
-    .then(() => {
+    .then((citations) => {
+    	console.log("citations===============",citations);
     	return res.json({
 			status:400,
 			message:"All done"

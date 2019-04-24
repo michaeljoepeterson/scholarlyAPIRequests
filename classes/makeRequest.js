@@ -331,7 +331,7 @@ MakeCalls.prototype.placeItalics = function(reference){
 MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 	try{
 		if(body !== undefined){
-			let self = this;
+			//let self = this;
 			const $ = cheerio.load(body);
 			const citationContent = $(".CitationContent");
 			console.log("citations ===============================",citationContent.length);
@@ -370,11 +370,21 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 //need this to return a promise and have article request function a anonymous function so that writing to the file can occur at the end of structuring all the data
 //unless only run one article at a time
 MakeCalls.prototype.getReferences = function(articleUrl) {
-	const options = {
-		url:articleUrl
-	};
+	let promise = new Promise((resolve,reject) => {
+		const options = {
+			url:articleUrl
+		};
 
-	this.request(options,this.articleRequestMade.bind(this));
+		this.request(options,function(errror,response,body){
+			const $ = cheerio.load(body);
+			const citationContent = $(".CitationContent");
+			resolve(citationContent);
+		});
+
+	});
+
+	return promise
+	
 }
 /*
 MakeCalls.prototype.requestMade = function(error,response,body) {
