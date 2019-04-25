@@ -310,7 +310,7 @@ MakeCalls.prototype.placeItalics = function(reference){
 	let fullRefText = $(reference).text();
 	const emChildren = $(reference).children(".EmphasisTypeItalic");
 	const emText = emChildren.text();
-	//console.log(emText);
+	console.log(emText);
 	for(let i = 0;i < emChildren.length;i++){
 		let startYearIndex = fullRefText.search(this.yearPattern);
 		let yearEndIndex = startYearIndex + 6;
@@ -328,19 +328,17 @@ MakeCalls.prototype.placeItalics = function(reference){
 }
 
 
-MakeCalls.prototype.articleRequestMade = function(error,response,body) {
+MakeCalls.prototype.articleRequestMade = function(citationContent) {
 	try{
-		if(body !== undefined){
-			//let self = this;
-			const $ = cheerio.load(body);
-			const citationContent = $(".CitationContent");
-			console.log("citations ===============================",citationContent.length);
-			
-			for(let i = 0;i < citationContent.length;i++){
-
+		
+		//let $ = cheerio.load(reference);
+		for(let i = 0;i < citationContent.length;i++){
+			let $ = cheerio.load(citationContent[i]);
+			const citations = $(".CitationContent");
+			for(let k = 0;k < citations.length;k++){
 				try{
-					let emText = this.placeItalics($(citationContent[i]));
-					//console.log(emText);
+					let emText = this.placeItalics($(citations[k]));
+					console.log(emText);
 					let refInfo = this.splitReference(emText);
 					this.referenceData.results.push({
 						id:this.idCounter,
@@ -353,15 +351,19 @@ MakeCalls.prototype.articleRequestMade = function(error,response,body) {
 				catch(err){
 					console.log("errror in articleRequestMade",err);
 				}
-				
 			}
-			//this.urlIndex++;
-			//this should be the finished data
 			
-			for(let i = 0; i < this.referenceData.results.length;i++){
-				//console.log(this.referenceData.results[i].rawText);
-			}
+			
 		}
+		//this.urlIndex++;
+		//this should be the finished data
+		
+		for(let i = 0; i < this.referenceData.results.length;i++){
+			console.log(this.referenceData.results[i]);
+		}
+
+		return this.referenceData
+		
 	}
 	catch(error){
 		console.log("error article", error);
@@ -376,9 +378,9 @@ MakeCalls.prototype.getReferences = function(articleUrl) {
 		};
 
 		this.request(options,function(errror,response,body){
-			const $ = cheerio.load(body);
-			const citationContent = $(".CitationContent");
-			resolve(citationContent);
+			//const $ = cheerio.load(body);
+			//const citationContent = $(".CitationContent");
+			resolve(body);
 		});
 
 	});

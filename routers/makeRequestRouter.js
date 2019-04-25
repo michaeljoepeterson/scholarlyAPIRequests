@@ -24,12 +24,6 @@ router.get("/",(req,res)=>{
 		}
 		let citations = [];
 
-		/*
-		https://css-tricks.com/why-using-reduce-to-sequentially-resolve-promises-works/
-		articleUrls.forEach(url => {
-
-		})
-		*/
 		//get undefined first cus of first promise
 		//then get first set of citations then second in the next then
 		return articleUrls.reduce(function(previous,item){
@@ -40,19 +34,11 @@ router.get("/",(req,res)=>{
 			})
 		}, Promise.resolve([]))
 		
-		/*
-		return articleUrls.forEach(function(url){
-			return makeCalls.getReferences(url)
-			.then(citationsData => {
-				console.log(citationsData.text());
-				//citations.push(citationsData);
-			})
-		})
-		*/
     })
 
     .then((citations) => {
-    	console.log("citations===============",citations);
+    	console.log("citations===============",citations.length);
+    	makeCalls.articleRequestMade(citations)
     	return res.json({
 			status:400,
 			message:"All done"
