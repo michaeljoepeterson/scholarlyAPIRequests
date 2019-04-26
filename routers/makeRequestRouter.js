@@ -2,19 +2,26 @@ const express = require("express");
 const {PORT,API_KEY,URL} = require('../config');
 const router = express.Router();
 const {MakeCalls} = require('../classes/makeRequest');
+const {WriteFile} = require('../classes/writeFile');
 
 router.get("/",(req,res)=>{
 	//how many articles to get
 	let pVal = req.query.pVal;
+	let makeCalls;
 	if(!pVal){
 		return res.json({
 			status:500,
 			message:"missing pVal"
 		});
 	}
-	const makeCalls = new MakeCalls(API_KEY,URL);
-    return makeCalls.makeRequest(pVal)
+	const writeFile = new WriteFile();
+	return writeFile.checkID()
 
+	.then(refID => {
+		makeCalls = new MakeCalls(API_KEY,URL,refID);
+    	return makeCalls.makeRequest(pVal)
+	})
+	
     .then(parsedData => {
     	let articleUrls = [];
 
@@ -26,6 +33,7 @@ router.get("/",(req,res)=>{
 
 		//get undefined first cus of first promise
 		//then get first set of citations then second in the next then
+		//this will return all article data in one array
 		return articleUrls.reduce(function(previous,item){
 			return previous.then(citationData => {
 				//console.log(citationData); 
@@ -37,8 +45,14 @@ router.get("/",(req,res)=>{
     })
 
     .then((citations) => {
-    	console.log("citations===============",citations.length);
-    	makeCalls.articleRequestMade(citations)
+    	//console.log("citations===============",citations.length);
+    	let referenceData = makeCalls.articleRequestMade(citations)
+    	writeFile.writeData(referenceData);
+    	//console.log(referenceData.results.length);
+    	
+    })
+
+    .then(() => {
     	return res.json({
 			status:400,
 			message:"All done"

@@ -2,7 +2,7 @@ const cheerio = require('cheerio');
 const request = require('request');
 
 //calls class
-function MakeCalls(apiKey,url){
+function MakeCalls(apiKey,url,idCounter){
 	this.request = request;
 	this.apiKey = apiKey;
 	this.url = url;
@@ -12,7 +12,7 @@ function MakeCalls(apiKey,url){
 	//this could probably be avoided with promises if set up properly
 	this.urls = [];
 	this.urlIndex = 0;
-	this.idCounter = 0;
+	this.idCounter = idCounter;
 	this.refTypefunctions = {
 		isWebsite: this.isWebsite.bind(this),
 		isEncyclopedia: this.isEncyclopedia.bind(this),
@@ -338,7 +338,7 @@ MakeCalls.prototype.articleRequestMade = function(citationContent) {
 			for(let k = 0;k < citations.length;k++){
 				try{
 					let emText = this.placeItalics($(citations[k]));
-					console.log(emText);
+					//console.log(emText);
 					let refInfo = this.splitReference(emText);
 					this.referenceData.results.push({
 						id:this.idCounter,
