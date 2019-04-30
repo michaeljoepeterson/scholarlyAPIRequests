@@ -17,7 +17,7 @@ WriteFile.prototype.checkID = function(){
 					//console.log("olddata",oldData)
 					//let startID = 0;
 					if(oldData.results){
-						resolve(oldData.results.length - 1);
+						resolve(oldData.results.length);
 					}
 					else{
 						resolve(0);

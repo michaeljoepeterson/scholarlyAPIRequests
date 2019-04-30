@@ -416,7 +416,10 @@ MakeCalls.prototype.requestMade = function(error,response,body) {
 //will likely need to make this not a class 
 //will also need to make a router eventually that I can use to make request and pass the p value
 //===========================================
-MakeCalls.prototype.makeRequest = function(pVal){
+MakeCalls.prototype.makeRequest = function(pVal,sVal){
+	if(sVal === undefined){
+		sVal = 1;
+	}
 	let promise = new Promise((resolve,reject) => {
 		const options = {
 		url:this.url,
@@ -424,8 +427,8 @@ MakeCalls.prototype.makeRequest = function(pVal){
 			api_key:this.apiKey,
 			q:"subject:Psychology openaccess:true",
 			output:"json",
-			p:pVal
-
+			p:pVal,
+			s:sVal
 			}
 		};
 

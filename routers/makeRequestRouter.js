@@ -7,6 +7,7 @@ const {WriteFile} = require('../classes/writeFile');
 router.get("/",(req,res)=>{
 	//how many articles to get
 	let pVal = req.query.pVal;
+	let sVal = req.query.sVal;
 	let makeCalls;
 	if(!pVal){
 		return res.json({
@@ -19,7 +20,7 @@ router.get("/",(req,res)=>{
 
 	.then(refID => {
 		makeCalls = new MakeCalls(API_KEY,URL,refID);
-    	return makeCalls.makeRequest(pVal)
+    	return makeCalls.makeRequest(pVal,sVal)
 	})
 	
     .then(parsedData => {
