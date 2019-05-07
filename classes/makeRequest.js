@@ -39,18 +39,7 @@ function MakeCalls(apiKey,url,idCounter){
 	this.volumePattern = /\(\d+\),|\<em\>\d+\<\/em\>/;
 	this.altJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>|\<em\>\d+,\<\/em\>|\<em\>\d+\<\/em\>/;
 }
-//initialize file writing class for json
-MakeCalls.prototype.createFile = function(data) {
-	
-}
-//call this on request error
-MakeCalls.prototype.requestError = function(data) {
-	
-}
-//call this on successful request
-MakeCalls.prototype.requestSuccess = function(data) {
-	
-}
+
 //can use this in all checks
 MakeCalls.prototype.findAuthors = function(refArray){
 	let foundYear = false
@@ -388,27 +377,7 @@ MakeCalls.prototype.getReferences = function(articleUrl) {
 	return promise
 	
 }
-/*
-MakeCalls.prototype.requestMade = function(error,response,body) {
-	try{
 
-		if(body !== undefined){
-			const parsedBody = JSON.parse(body);
-			
-
-			for(let i = 0;i < parsedBody.records.length;i++){
-
-				this.getReferences(parsedBody.records[i].url[0].value);
-			}
-		}
-		
-	}
-	catch(error){
-		console.log("error ", error);
-	}
-	
-}
-*/
 //make the actual request
 //to continue at next set of results it is p + 1
 //may also want to figure out how to return a promise from this
