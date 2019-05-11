@@ -46,4 +46,23 @@ describe("Tests for reference functions",function(){
 		
 		done();
 	});
+
+	it("should break up journal ref correctly",function(done){
+		let refArray = testData.journals[0].replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
+		let journalData = makeCalls.isJournal(refArray,testData.journals[0]);
+		
+		//console.log(journalData);
+		expect(journalData.authors).to.equal('Terwee, C. B., Mokkink, L. B., Knol, D. L., Ostelo, R. W., Bouter, L. M., & de Vet, H. C.');
+		done();
+	});
+
+	it("should break up book ref correctly",function(done){	
+		
+		done();
+	});
+
+	it("should break up journal no issue ref correctly",function(done){
+		
+		done();
+	});
 });
