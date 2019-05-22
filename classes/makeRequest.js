@@ -36,7 +36,7 @@ function MakeCalls(apiKey,url,idCounter){
 	this.altBookPattern = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+,\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./;
 	this.bookPatternNoCity = /\(pp\.\s{1}\d+\-|\u2013|\u2014\d+\)\.\s{1}\w+\:\s{1}\w+\s*\w*\s*\w*\./
 	//,\s{1}\d+, this can be used to find a mla journal reference and then filter that out
-	this.volumePattern = /\(\d+\),|\<em\>\d+\<\/em\>/;
+	this.volumePattern = /\(\d+\),/;
 	this.altJournalPattern = /,\s{1}\d+,|,\s{1}\d+\<\/em\>|\<em\>\d+,\<\/em\>|\<em\>\d+\<\/em\>/;
 }
 
@@ -56,11 +56,9 @@ MakeCalls.prototype.findAuthors = function(refArray){
 	}
 
 	let authorString = authorArray.join(" ");
-	//console.log("author string: ",authorString);
 	return [authorString,yearIndex];
 }
 MakeCalls.prototype.isWebsite = function(refArray){
-	//console.log("website function",refArray);
 	let refObject = {};
 	let results = this.findAuthors(refArray);
 	let afterYearIndex = results[1] + 1;
@@ -80,37 +78,33 @@ MakeCalls.prototype.isWebsite = function(refArray){
 	}
 	let titleString = titleArray.join(" ");
 	refObject.title = titleString;
-	//console.log("site ref object ",refObject);
+
 	return refObject;
 }
 
 MakeCalls.prototype.isEncyclopedia = function(refArray){
-	//console.log("website function",refArray);
+
 	this.findAuthors(refArray);
 	return {}
 }
 
 MakeCalls.prototype.isMovie = function(refArray){
-	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 	return {}
 }
 
 MakeCalls.prototype.isMagazine = function(refArray){
-	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 	return {}
 }
 
 MakeCalls.prototype.isNewspaper = function(refArray){
-	//console.log("website function",refArray);
 	this.findAuthors(refArray);
 	return {}
 }
 
 
 MakeCalls.prototype.isBook = function(refArray,refString){
-	//console.log("book function",refArray);
 	let refObject = {};
 	let emTitleRegex = /\<em\>(.+?)\<\/em\>/g;
 	//match regular title no em
@@ -181,12 +175,17 @@ MakeCalls.prototype.isJournalNoIssue = function(refArray,refString){
 	refObject.journal = journaltitleMatches[0]; 
 	let volumeRegex = /(\d*?)(?=\<\/em\>)/g;
 	let volumeMatch = refString.match(volumeRegex);
-	refObject.volume = volumeMatch[0];
-	let pagesRegex = /(?<=\<\/em\>)(.*?)\./g;
+	for(let i = 0;i < volumeMatch.length;i++){
+		if(volumeMatch[i] !== ""){
+			refObject.volume = volumeMatch[i];
+		}
+	}
+	//let pagesRegex = /(?<=\<\/em\>)(.*?)\.|\d+[-\u2013\u2014–]\d+/g;
+	let pagesRegex = /\d+[-\u2013\u2014–]\d+/g;
 	let pageMatch = refString.match(pagesRegex);
-	
+	//console.log(refObject.volume,volumeMatch);
 	refObject.pages = pageMatch[0];
-	//console.log(refObject);
+
 	return refObject;
 }
 //will have to modify for volume/issue
@@ -194,6 +193,7 @@ MakeCalls.prototype.isJournal = function(refArray,refString){
 	let refObject = {};
 
 	let results = this.findAuthors(refArray);
+
 	let afterYearIndex = results[1] + 1;
 	refObject.authors = results[0];
 	refObject.year = refArray[afterYearIndex -1];
@@ -205,6 +205,7 @@ MakeCalls.prototype.isJournal = function(refArray,refString){
 	refObject.journal = journaltitleMatches[0];
 	let volumeRegex = /(?<=\,\s{1})(\d*?)(?=\<\/em\>)/g;
 	let volumeMatch = refString.match(volumeRegex);
+	//console.log("test=====================================",this.volumePattern.test(refString),refString);
 	refObject.volume = volumeMatch[0];
 	let issueRegex = /(?<=\<\/em\>\()(\d*?)(?=\)\,)/g;
 	let issueMatch = refString.match(issueRegex);
@@ -212,12 +213,12 @@ MakeCalls.prototype.isJournal = function(refArray,refString){
 	let pagesRegex = /(?<=\)\,)(.*?)\./g;
 	let pageMatch = refString.match(pagesRegex);
 	refObject.pages = pageMatch[0];
-
-	console.log("joural ref object ",refObject);
+	
 	return refObject;
 }
 //use this to determine the type of reference will check for journal, magazine, book, newspaper, webiste, movie and encyclopedia
 MakeCalls.prototype.checkRefType = function(refString,refArray){
+	
 	let refType = "Unknown";
 	//Check if encyclopedia
 	if(refString.search("Encylopedia") !== -1 || refString.search("encylopedia") !== -1){
@@ -269,7 +270,7 @@ MakeCalls.prototype.checkRefType = function(refString,refArray){
 		}
 
 	}
-
+	//console.log("test2=====================================",refType);
 	return refType;
 }
 
@@ -279,16 +280,13 @@ MakeCalls.prototype.splitReference = function(referenceText){
 	let refArray = referenceText.replace(/Google Scholar|CrossRef/g,"").replace(/ +/g,' ').replace(/\n/g,"").trim().split(" ");
 
 	let refType = this.checkRefType(referenceText,refArray);
-	let referenceObject;
+	let referenceObject = {};
 	if(this.refTypefunctions[refType]){
 		referenceObject = this.refTypefunctions[refType](refArray,referenceText);
-		referenceObject.type = refType;
+		
 	}
-	/*
-	if(refType === "Unknown"){
-		console.log(refArray[0],refType);
-	}
-	*/
+	referenceObject.type = refType;
+
 	return referenceObject;
 }
 
@@ -299,7 +297,7 @@ MakeCalls.prototype.placeItalics = function(reference){
 	let fullRefText = $(reference).text();
 	const emChildren = $(reference).children(".EmphasisTypeItalic");
 	const emText = emChildren.text();
-	console.log(emText);
+	//console.log(fullRefText,emText);
 	for(let i = 0;i < emChildren.length;i++){
 		let startYearIndex = fullRefText.search(this.yearPattern);
 		let yearEndIndex = startYearIndex + 6;
@@ -327,7 +325,6 @@ MakeCalls.prototype.articleRequestMade = function(citationContent) {
 			for(let k = 0;k < citations.length;k++){
 				try{
 					let emText = this.placeItalics($(citations[k]));
-					//console.log(emText);
 					let refInfo = this.splitReference(emText);
 					this.referenceData.results.push({
 						id:this.idCounter,
@@ -346,11 +343,11 @@ MakeCalls.prototype.articleRequestMade = function(citationContent) {
 		}
 		//this.urlIndex++;
 		//this should be the finished data
-		
+		/*
 		for(let i = 0; i < this.referenceData.results.length;i++){
 			console.log(this.referenceData.results[i]);
 		}
-
+		*/
 		return this.referenceData
 		
 	}

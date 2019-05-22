@@ -48,8 +48,7 @@ router.get("/",(req,res)=>{
     .then((citations) => {
     	//console.log("citations===============",citations.length);
     	let referenceData = makeCalls.articleRequestMade(citations);
-    	writeFile.writeData(referenceData);
-    	//console.log(referenceData.results.length);
+    	return writeFile.writeData(referenceData)
     	
     })
 
